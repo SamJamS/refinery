@@ -25,6 +25,8 @@ func NewPeers(c config.Config) (Peers, error) {
 		return newFilePeers(c), nil
 	case "redis":
 		return newRedisPeers(c)
+	case "kubeHeadless":
+		return newKubeHeadlessPeers(c)
 	default:
 		return nil, errors.New("Invalid PeerManagement Type")
 	}

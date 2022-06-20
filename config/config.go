@@ -41,6 +41,8 @@ type Config interface {
 
 	GetPeerManagementType() (string, error)
 
+	GetKubeHeadlessService() (string, error)
+
 	// GetRedisHost returns the address of a Redis instance to use for peer
 	// management.
 	GetRedisHost() (string, error)

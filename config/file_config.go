@@ -81,11 +81,12 @@ type HoneycombMetricsConfig struct {
 }
 
 type PeerManagementConfig struct {
-	Type                    string   `validate:"required,oneof= file redis"`
+	Type                    string   `validate:"required,oneof= file redis kubeHeadless"`
 	Peers                   []string `validate:"dive,url"`
 	RedisHost               string
 	RedisUsername           string
 	RedisPassword           string
+	KubeHeadlessService     string
 	UseTLS                  bool
 	UseTLSInsecure          bool
 	IdentifierInterfaceName string
@@ -407,6 +408,13 @@ func (f *fileConfig) GetPeers() ([]string, error) {
 	defer f.mux.RUnlock()
 
 	return f.conf.PeerManagement.Peers, nil
+}
+
+func (f *fileConfig) GetKubeHeadlessService() (string, error) {
+	f.mux.RLock()
+	defer f.mux.RUnlock()
+
+	return f.config.GetString("PeerManagement.KubeHeadlessService"), nil
 }
 
 func (f *fileConfig) GetRedisHost() (string, error) {
