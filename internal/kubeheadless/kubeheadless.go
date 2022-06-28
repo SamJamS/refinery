@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"net"
+
+	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 type Membership interface {
@@ -13,7 +17,9 @@ type Membership interface {
 type KubeHeadlessMembership struct {
 	// worth namespacing?
 	//Prefix string
-	Service string
+	Service    string
+	Client     *kubernetes.Clientset
+	UsePodName bool
 }
 
 func (khm *KubeHeadlessMembership) validateDefaults() error {
@@ -42,11 +48,32 @@ func (khm *KubeHeadlessMembership) GetMembers(ctx context.Context) ([]string, er
 
 func (khm *KubeHeadlessMembership) getMembers(ctx context.Context) ([]string, error) {
 	memberList := make([]string, 0)
-	hosts, err := net.LookupHost(khm.Service)
-	if err != nil {
-		return nil, err
+
+	if khm.UsePodName {
+		endpoints, err := khm.Client.CoreV1().Endpoints("default").Get(ctx, khm.Service, v1.GetOptions{})
+
+		if err != nil {
+			logrus.Error(err, "trouble looking up service")
+		}
+
+		for _, subset := range endpoints.Subsets {
+			for _, address := range subset.Addresses {
+				memberAddress := "http://" + address.TargetRef.Name + ":8081"
+				memberList = append(memberList, memberAddress)
+			}
+		}
+	} else {
+		hosts, err := net.LookupHost(khm.Service)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for i, host := range hosts {
+			hosts[i] = "http://" + host + ":8081"
+		}
+		memberList = append(memberList, hosts...)
 	}
-	memberList = append(memberList, hosts...)
 
 	return memberList, nil
 }

@@ -417,6 +417,13 @@ func (f *fileConfig) GetKubeHeadlessService() (string, error) {
 	return f.config.GetString("PeerManagement.KubeHeadlessService"), nil
 }
 
+func (f *fileConfig) GetKubeUsePodName() (bool, error) {
+	f.mux.RLock()
+	defer f.mux.RUnlock()
+
+	return f.config.GetBool("PeerManagement.KubeUsePodName"), nil
+}
+
 func (f *fileConfig) GetRedisHost() (string, error) {
 	f.mux.RLock()
 	defer f.mux.RUnlock()
